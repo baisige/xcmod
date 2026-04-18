@@ -1,0 +1,25 @@
+{
+  "name": "xcmod",
+  "version": "1.0.0",
+  "description": "A game modification tool similar to WeMod",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-packager . xcmod --platform=win32 --arch=x64 --out=dist --overwrite"
+  },
+  "keywords": [
+    "game",
+    "cheat",
+    "modifier",
+    "memory"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^28.3.3"
+  },
+  "dependencies": {
+    "i18next": "^26.0.5",
+    "i18next-fs-backend": "^2.6.3"
+  }
+}

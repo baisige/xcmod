@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>xcmod</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    .sidebar {
+      width: 280px;
+      background: rgba(255, 255, 255, 0.05);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .sidebar h2 {
+      font-size: 18px;
+      color: #00d4ff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .sidebar-btn {
+      padding: 10px 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .sidebar-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .sidebar-btn.primary {
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      border-color: transparent;
+    }
+
+    .sidebar-btn.primary:hover {
+      background: linear-gradient(135deg, #00e5ff, #00aadd);
+      transform: translateY(-2px);
+    }
+
+    .save-plugin-btn {
+      background: rgba(0, 212, 255, 0.1) !important;
+      border: 1px solid rgba(0, 212, 255, 0.3) !important;
+      color: #00d4ff !important;
+      transition: all 0.25s;
+    }
+    .save-plugin-btn:hover {
+      background: rgba(0, 212, 255, 0.22) !important;
+      border-color: #00d4ff !important;
+      transform: translateY(-1px);
+    }
+
+    .sidebar-subtitle {
+      font-size: 12px;
+      color: #888;
+      margin-top: -5px;
+    }
+
+    .sidebar-info {
+      margin-bottom: 20px;
+      padding: 10px 12px;
+      background: rgba(0, 212, 255, 0.1);
+      border-radius: 6px;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .plugin-count strong {
+      color: #00d4ff;
+    }
+
+    .game-list {
+      list-style: none;
+    }
+
+    .game-item {
+      padding: 15px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+
+    .game-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(0, 212, 255, 0.3);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      color: #00d4ff;
+    }
+
+    .process-selector {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* 自定义进程下拉框（带图标） */
+    .proc-dropdown {
+      position: relative;
+      min-width: 260px;
+    }
+
+    .proc-dropdown-trigger {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      background: rgba(20, 20, 40, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      user-select: none;
+    }
+
+    .proc-dropdown-trigger:hover {
+      border-color: rgba(0, 212, 255, 0.5);
+    }
+
+    .proc-dropdown.open .proc-dropdown-trigger {
+      border-color: #00d4ff;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.2);
+    }
+
+    .proc-selected-icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      object-fit: contain;
+      border-radius: 2px;
+    }
+
+    .proc-selected-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #ccc;
+    }
+
+    .proc-dropdown-arrow {
+      color: #888;
+      font-size: 10px;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .proc-dropdown.open .proc-dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .proc-dropdown-list {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 320px;
+      overflow-y: auto;
+      background: rgba(20, 20, 45, 0.98);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 8px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      padding: 4px;
+    }
+
+    .proc-dropdown.open .proc-dropdown-list {
+      display: block;
+    }
+
+    .proc-search-wrap {
+      padding: 6px 4px 8px 4px;
+      position: sticky;
+      top: 0;
+      background: rgba(20, 20, 45, 0.98);
+      z-index: 1;
+    }
+
+    .proc-search-input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 7px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 5px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #ddd;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .proc-search-input:focus {
+      border-color: #00d4ff;
+    }
+    .proc-search-input::placeholder {
+      color: #555;
+    }
+
+    .proc-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .proc-item:hover {
+      background: rgba(0, 212, 255, 0.12);
+    }
+
+    .proc-item.selected {
+      background: rgba(0, 212, 255, 0.2);
+    }
+
+    .proc-item-icon {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      object-fit: contain;
+      border-radius: 3px;
+    }
+
+    .proc-item-info {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .proc-item-name {
+      font-size: 13px;
+      color: #ddd;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .proc-item-pid {
+      font-size: 11px;
+      color: #888;
+      font-family: 'Consolas', monospace;
+    }
+
+    .proc-item-path {
+      font-size: 10px;
+      color: #666;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 下拉框滚动条美化 */
+    .proc-dropdown-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .proc-dropdown-list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .proc-dropdown-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 3px;
+    }
+    .proc-dropdown-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .process-selector select {
+      padding: 10px 15px;
+      background: rgba(20, 20, 40, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      min-width: 220px;
+      font-size: 14px;
+    }
+
+    .process-selector select option {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 5px 10px;
+    }
+
+    .scan-panel, .cheat-panel {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .scan-panel h3, .cheat-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    /* 覆盖：扫描区h3已外层flex包裹，不需要内部flex */
+    .scan-panel > div > h3 {
+      margin-bottom: 0;
+    }
+
+    .scan-game-hint {
+      font-size: 12px;
+      color: #888;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 4px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      white-space: nowrap;
+    }
+    .scan-game-hint .hint-exe {
+      color: #00d4ff;
+      font-family: 'Consolas', monospace;
+      font-weight: bold;
+    }
+
+    .cheat-panel-header h3 {
+      font-size: 16px;
+      color: #00d4ff;
+      margin: 0;
+    }
+
+    .cheat-add-btn {
+      padding: 6px 16px;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .cheat-add-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+    }
+
+    .cheat-card-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 20px;
+      height: 20px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 60, 60, 0.15);
+      color: #ff6b6b;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      opacity: 1;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+
+    .cheat-card-delete:hover {
+      background: rgba(255, 60, 60, 0.45);
+      color: #fff;
+    }
+
+    .scan-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .scan-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .scan-input-label {
+      font-size: 11px;
+      color: #888;
+      padding-left: 2px;
+    }
+
+    .scan-input-group input:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .scan-input-group.active input:disabled {
+      opacity: 1;
+      cursor: text;
+    }
+
+    .scan-form input, .scan-form select, .scan-form button {
+      padding: 10px 14px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .scan-form input { min-width: 120px; }
+    .scan-form select { min-width: 80px; }
+
+    .scan-form input:focus, .scan-form select:focus {
+      outline: none;
+      border-color: #00d4ff;
+    }
+
+    /* 修复下拉框选项样式 */
+    .scan-form select option {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 8px;
+    }
+
+    .scan-form select option:hover {
+      background: #00d4ff;
+    }
+
+    .scan-form button {
+      cursor: pointer;
+      transition: transform 0.2s, opacity 0.2s;
+      white-space: nowrap;
+    }
+
+    .scan-form button#startScanBtn {
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+    }
+
+    .scan-form button#rescanBtn {
+      background: linear-gradient(135deg, #e0a000, #c08000);
+    }
+
+    .scan-form button#rescanBtn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .scan-form button:not(:disabled):hover {
+      transform: translateY(-2px);
+    }
+
+    .scan-results {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* 扫描结果区域（首次/筛选） */
+    .scan-section {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-content: flex-start;
+    }
+
+    .scan-results-header {
+      width: 100%;
+      padding: 6px 10px;
+      color: #8f8;
+      font-size: 12px;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* 筛选结果区域标题 */
+    .scan-header-filtered {
+      color: #e0a000 !important;
+      background: rgba(224, 160, 0, 0.06);
+      border-radius: 4px;
+    }
+
+    /* 清空按钮 */
+    .scan-clear-btn {
+      padding: 2px 10px;
+      background: rgba(255, 68, 68, 0.15);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+      border-radius: 3px;
+      color: #ff6666;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .scan-clear-btn:hover {
+      background: rgba(255, 68, 68, 0.3);
+      color: #ff8888;
+    }
+
+    .result-item {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      min-width: 160px;
+      max-width: 220px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .result-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(0, 212, 255, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .result-item.selected {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: #00d4ff;
+    }
+
+    /* 筛选结果卡片 - 金色高亮 */
+    .result-filtered {
+      min-width: 200px;
+      max-width: 280px;
+      border-color: rgba(224, 160, 0, 0.3) !important;
+      background: rgba(224, 160, 0, 0.06) !important;
+    }
+    .result-filtered:hover {
+      border-color: rgba(224, 160, 0, 0.6) !important;
+      background: rgba(224, 160, 0, 0.12) !important;
+    }
+
+    /* 结果行（首次/二次） */
+    .result-row {
+      display: block;
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      text-align: center;
+      line-height: 1.5;
+      word-break: break-all;
+    }
+    .result-row-first {
+      color: #00d4ff;
+    }
+    .result-row-second {
+      color: #e0a000;
+      font-weight: 600;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    /* 首次扫描区域中的卡片也用双行格式 */
+    .result-first .result-addr,
+    .result-first .result-val {
+      display: none;
+    }
+
+    .result-addr {
+      font-family: 'Consolas', monospace;
+      font-size: 11px;
+      color: #00d4ff;
+      word-break: break-all;
+      text-align: center;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .result-val {
+      font-family: 'Consolas', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .result-add-btn {
+      flex-shrink: 0;
+      padding: 3px 12px;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 6px;
+    }
+
+    .result-add-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 212, 255, 0.4);
+    }
+
+    /* 添加到插件对话框 */
+    /* ===== 统一弹窗系统 ===== */
+    @keyframes xdDialogIn {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes xdDialogOut {
+      from { opacity: 1; transform: scale(1) translateY(0); }
+      to   { opacity: 0; transform: scale(0.96) translateY(8px); }
+    }
+    @keyframes xdBackdropIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    .xd-dialog {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: xdBackdropIn 0.18s ease-out;
+    }
+    .xd-dialog.closing {
+      animation: xdBackdropIn 0.15s ease-in reverse forwards;
+    }
+
+    .xd-dialog-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .xd-dialog-box {
+      position: relative;
+      width: 400px;
+      max-width: 88vw;
+      max-height: 85vh;
+      overflow-y: auto;
+      background: linear-gradient(165deg, #1e1e2e 0%, #16161e 100%);
+      border: 1px solid rgba(0, 212, 255, 0.18);
+      border-radius: 14px;
+      padding: 0;
+      z-index: 1;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 20px 60px rgba(0, 0, 0, 0.55),
+        0 0 40px rgba(0, 212, 255, 0.06);
+      animation: xdDialogIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .xd-dialog.closing .xd-dialog-box {
+      animation: xdDialogOut 0.15s ease-in both;
+    }
+
+    /* 弹窗头部 */
+    .xd-dialog-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .xd-dialog-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      background: rgba(0, 212, 255, 0.1);
+      color: #00d4ff;
+    }
+    .xd-dialog-title {
+      flex: 1;
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #eee;
+      letter-spacing: 0.3px;
+    }
+    .xd-dialog-close {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      color: #777;
+      font-size: 16px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .xd-dialog-close:hover {
+      background: rgba(255, 60, 60, 0.15);
+      color: #ff6666;
+    }
+
+    /* 弹窗内容区 */
+    .xd-dialog-body {
+      padding: 18px 22px;
+    }
+
+    /* 弹窗表单 */
+    .xd-form-label {
+      display: block;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 5px;
+      margin-top: 14px;
+      letter-spacing: 0.3px;
+    }
+    .xd-form-label:first-child {
+      margin-top: 0;
+    }
+    .xd-form-label .required {
+      color: #ff6b6b;
+      margin-left: 2px;
+    }
+    .xd-input {
+      width: 100%;
+      padding: 10px 13px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #e8e8e8;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+    .xd-input::placeholder {
+      color: #555;
+    }
+    .xd-input:focus {
+      border-color: rgba(0, 212, 255, 0.5);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.1);
+      background: rgba(0, 0, 0, 0.35);
+    }
+    textarea.xd-input {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.55;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+
+    /* 弹窗底部按钮栏 */
+    .xd-dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 14px 22px 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .xd-btn {
+      padding: 9px 22px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+    }
+    .xd-btn-cancel {
+      background: rgba(255, 255, 255, 0.07);
+      color: #aaa;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .xd-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.13);
+      color: #ddd;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+    .xd-btn-primary {
+      background: linear-gradient(135deg, #00c8ff 0%, #0099cc 100%);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(0, 200, 255, 0.25);
+    }
+    .xd-btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 200, 255, 0.38);
+      filter: brightness(1.08);
+    }
+    .xd-btn-danger {
+      background: linear-gradient(135deg, #ff5566 0%, #cc3344 100%);
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(255, 85, 102, 0.25);
+    }
+    .xd-btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(255, 85, 102, 0.38);
+      filter: brightness(1.08);
+    }
+
+    .cheat-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .cheat-card {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.03) 100%);
+      border-radius: 10px;
+      padding: 10px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-align: center;
+    }
+
+    .cheat-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #00d4ff, #00ff88);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .cheat-card:hover {
+      border-color: rgba(0, 212, 255, 0.4);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    }
+
+    .cheat-card:hover::before {
+      opacity: 0.6;
+    }
+
+    .cheat-card.active {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.12) 0%, rgba(0, 255, 136, 0.04) 100%);
+      border-color: #00ff88;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.18);
+    }
+
+    .cheat-card.active::before {
+      background: #00ff88;
+      opacity: 1;
+    }
+
+    .cheat-header {
+      margin-bottom: 8px;
+    }
+
+    .cheat-name {
+      display: block;
+      text-align: center;
+      font-weight: 600;
+      font-size: 14px;
+      color: #fff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .cheat-hotkey {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: 'Consolas', monospace;
+      color: #fff;
+      font-weight: 500;
+    }
+
+    .cheat-value-input {
+      flex: 1;
+      min-width: 80px;
+      max-width: 140px;
+      padding: 5px 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      font-family: 'Consolas', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+      -webkit-appearance: none;
+      -moz-appearance: textfield;
+    }
+
+    .cheat-value-input:focus {
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: none;
+    }
+
+    .cheat-value-input::-webkit-outer-spin-button,
+    .cheat-value-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .cheat-address-row {
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: #fff;
+      margin-bottom: 8px;
+      padding: 0;
+      background: none;
+    }
+
+    .cheat-write-btn {
+      padding: 4px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .cheat-write-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .footer-tip {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-left: 5px;
+    }
+
+    .status-bar {
+      margin-top: auto;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #888;
+    }
+
+    .status-online {
+      color: #00ff88;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .empty-state h3 {
+      margin-bottom: 10px;
+      color: #888;
+    }
+
+    .refresh-btn {
+      padding: 8px 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 12px;
+      transition: background 0.3s;
+    }
+
+    .refresh-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .game-item.locked {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .game-item.selected {
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(0, 212, 255, 0.08) 100%);
+      border-color: #00d4ff;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.25);
+    }
+
+    .game-name-text {
+      flex: 1;
+      cursor: pointer;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .game-name-text:hover {
+      color: #00d4ff;
+    }
+
+    .game-delete-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: rgba(255, 60, 60, 0.15);
+      color: #ff6b6b;
+      font-size: 16px;
+      line-height: 1;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .game-delete-btn:hover {
+      background: rgba(255, 60, 60, 0.4);
+      color: #fff;
+    }
+
+    .game-edit-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      background: rgba(0, 212, 255, 0.12);
+      color: #00d4ff;
+      font-size: 13px;
+      line-height: 1;
+      border-radius: 4px;
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-right: 5px;
+      transition: all 0.2s;
+    }
+    .game-edit-btn:hover {
+      background: rgba(0, 212, 255, 0.3);
+      color: #fff;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: linear-gradient(165deg, #1e1e2e 0%, #16161e 100%);
+      border-radius: 14px;
+      width: 90%;
+      max-width: 820px;
+      max-height: 88vh;
+      overflow: hidden;
+      border: 1px solid rgba(0, 212, 255, 0.18);
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 24px 70px rgba(0, 0, 0, 0.55),
+        0 0 50px rgba(0, 212, 255, 0.06);
+      animation: xdDialogIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .modal-header h2 {
+      color: #eee;
+      margin: 0;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .close-btn {
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: rgba(255, 255, 255, 0.07);
+      color: #888;
+      font-size: 18px;
+      cursor: pointer;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      background: rgba(255, 60, 60, 0.15);
+      color: #ff6666;
+    }
+
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      max-height: calc(90vh - 80px);
+    }
+
+    .tab-container {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: #888;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+      color: #00d4ff;
+      border-bottom-color: #00d4ff;
+    }
+
+    .tab-content {
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .create-guide {
+      background: rgba(0, 212, 255, 0.1);
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 20px;
+    }
+
+    .create-guide p {
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #00d4ff;
+    }
+
+    .create-guide ol {
+      margin: 0;
+      padding-left: 20px;
+      color: #ccc;
+      font-size: 14px;
+    }
+
+    .create-guide li {
+      margin-bottom: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    .form-group textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .cheat-item {
+      display: grid;
+      grid-template-columns: 30px 1fr 1fr 1fr 100px 120px 80px 30px;
+      gap: 8px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .cheat-value-input {
+      flex: 1;
+      min-width: 80px;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      font-family: 'Consolas', monospace;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .cheat-value-input:focus {
+      border-color: #00d4ff;
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+    }
+
+    .cheat-write-btn {
+      padding: 7px 18px;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .cheat-write-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 212, 255, 0.4);
+    }
+
+    .cheat-item input, .cheat-item select {
+      padding: 8px;
+      font-size: 12px;
+    }
+
+    .cheat-action-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .cheat-action-btn.add-btn {
+      background: rgba(0, 255, 136, 0.2);
+      color: #00ff88;
+    }
+
+    .cheat-action-btn.add-btn:hover {
+      background: rgba(0, 255, 136, 0.4);
+    }
+
+    .cheat-action-btn.remove-btn {
+      background: rgba(255, 0, 0, 0.2);
+      color: #ff6b6b;
+    }
+
+    .cheat-action-btn.remove-btn:hover {
+      background: rgba(255, 0, 0, 0.4);
+    }
+
+    .remove-cheat, .add-cheat {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .remove-cheat {
+      background: rgba(255, 0, 0, 0.2);
+      color: #ff6b6b;
+    }
+
+    .add-cheat {
+      background: rgba(0, 212, 255, 0.2);
+      color: #00d4ff;
+      margin-top: 10px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #00d4ff, #0099cc);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    /* ===== 上传/导入 插件区域 ===== */
+    .import-zone {
+      border: 2px dashed rgba(0, 212, 255, 0.3);
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      margin-bottom: 16px;
+      transition: all 0.25s ease;
+      background: rgba(0, 212, 255, 0.03);
+    }
+    .import-zone:hover {
+      border-color: rgba(0, 212, 255, 0.6);
+      background: rgba(0, 212, 255, 0.06);
+    }
+    .import-zone.drag-over {
+      border-color: #00d4ff;
+      background: rgba(0, 212, 255, 0.12);
+      box-shadow: 0 0 20px rgba(0, 212, 255, 0.2) inset;
+    }
+    .import-drop-hint {
+      color: #888;
+    }
+    .import-drop-hint .import-icon {
+      font-size: 36px;
+      display: block;
+      margin-bottom: 8px;
+      opacity: 0.6;
+    }
+    .import-drop-hint p {
+      margin: 4px 0;
+      font-size: 14px;
+    }
+    .import-sub {
+      color: #666 !important;
+      font-size: 12px !important;
+    }
+    .import-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .import-btn {
+      padding: 7px 16px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: #ccc;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .import-btn:hover {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: rgba(0, 212, 255, 0.4);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .import-from-scan {
+      background: linear-gradient(135deg, rgba(224, 160, 0, 0.15), rgba(192, 128, 0, 0.1));
+      border-color: rgba(224, 160, 0, 0.4);
+      color: #e0a000;
+    }
+    .import-from-scan:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(224, 160, 0, 0.25), rgba(192, 128, 0, 0.18));
+      border-color: #e0a000;
+      color: #f0b010;
+    }
+    .import-from-scan:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* 手动编辑区域 */
+    .upload-manual-section {
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding-top: 14px;
+    }
+    .manual-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      color: #888;
+      font-size: 13px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .manual-toggle {
+      padding: 3px 10px;
+      background: none;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      color: #888;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .manual-toggle:hover {
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 14px;
+    }
+    .form-half {
+      flex: 1;
+    }
+    .cheats-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .cheats-header label {
+      margin-bottom: 0 !important;
+    }
+    .add-cheat-sm {
+      padding: 4px 12px;
+      background: rgba(0, 212, 255, 0.12);
+      border: 1px solid rgba(0, 212, 255, 0.3);
+      border-radius: 4px;
+      color: #00d4ff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .add-cheat-sm:hover {
+      background: rgba(0, 212, 255, 0.22);
+      transform: translateY(-1px);
+    }
+
+    /* 粘贴JSON对话框（复用统一弹窗系统）*/
+    .paste-dialog {
+      background: #1e1e2e;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      width: 90%;
+      max-width: 560px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    .paste-dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .paste-dialog-header h4 {
+      margin: 0;
+      font-size: 15px;
+      color: #eee;
+    }
+    .paste-close-btn {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .paste-close-btn:hover {
+      color: #ff4444;
+    }
+    .paste-dialog textarea {
+      width: 100%;
+      min-height: 260px;
+      padding: 14px 18px;
+      background: #12121a;
+      border: none;
+      color: #c8d4e0;
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: vertical;
+      box-sizing: border-box;
+      outline: none;
+    }
+    .paste-dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 12px 18px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .btn-secondary {
+      padding: 7px 20px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 5px;
+      color: #aaa;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      border-color: #fff;
+      color: #fff;
+    }
+
+    .guide-content {
+      color: #ccc;
+      line-height: 1.6;
+    }
+
+    .guide-content h4 {
+      color: #00d4ff;
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
+    .guide-content ol, .guide-content ul {
+      padding-left: 20px;
+      margin-bottom: 15px;
+    }
+
+    .guide-content code, .guide-content pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .guide-content pre {
+      padding: 15px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+
+    .guide-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+
+    .guide-content th, .guide-content td {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px;
+      text-align: left;
+    }
+
+    .guide-content th {
+      background: rgba(0, 212, 255, 0.1);
+      color: #00d4ff;
+    }
+
+    /* 日志工具栏按钮（在刷新按钮旁边）*/
+    .log-toolbar-btn {
+      padding: 8px 15px;
+      background: rgba(0, 212, 255, 0.12);
+      border: 1px solid rgba(0, 212, 255, 0.35);
+      border-radius: 4px;
+      color: #00d4ff;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .log-toolbar-btn:hover {
+      background: rgba(0, 212, 255, 0.25);
+      border-color: #00d4ff;
+    }
+    .log-clear-btn {
+      padding: 8px 15px;
+      border-color: rgba(255, 100, 100, 0.35);
+      color: #ff8888;
+      background: rgba(255, 60, 60, 0.08);
+    }
+    .log-clear-btn:hover {
+      background: rgba(255, 60, 60, 0.2);
+      border-color: #ff6666;
+      color: #ffaaaa;
+    }
+
+    .language-select {
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .language-select:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .language-select option {
+      background: #222;
+      color: #fff;
+    }
+
+    /* 日志弹窗（复用统一弹窗视觉）*/
+    .log-dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: xdBackdropIn 0.18s ease-out;
+    }
+    .log-dialog {
+      background: linear-gradient(165deg, #1e1e2e 0%, #16161e 100%);
+      border: 1px solid rgba(0, 212, 255, 0.18);
+      border-radius: 14px;
+      width: 88vw;
+      max-width: 720px;
+      height: 70vh;
+      max-height: 520px;
+      display: flex;
+      flex-direction: column;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+        0 20px 60px rgba(0, 0, 0, 0.55),
+        0 0 40px rgba(0, 212, 255, 0.06);
+      animation: xdDialogIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+      overflow: hidden;
+    }
+    .log-dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      flex-shrink: 0;
+    }
+    .log-dialog-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #eee;
+    }
+    .log-dialog-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .log-close-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: rgba(255, 255, 255, 0.06);
+      color: #777;
+      font-size: 16px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .log-close-btn:hover {
+      background: rgba(255, 60, 60, 0.15);
+      color: #ff6666;
+    }
+    .log-dialog-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 12px;
+      line-height: 1.65;
+      word-break: break-all;
+    }
+    .log-dialog-footer {
+      padding: 6px 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 11px;
+      color: #666;
+      flex-shrink: 0;
+    }
+
+    /* 日志条目样式（弹窗内复用）*/
+
+    .log-entry {
+      padding: 1px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .log-time {
+      color: #666;
+      margin-right: 8px;
+    }
+
+    .log-info { color: #00d4ff; }
+    .log-success { color: #00ff88; }
+    .log-warning { color: #ffaa00; }
+    .log-error { color: #ff4444; }
+    .log-debug { color: #aa88ff; }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h2>🎮 xcmod</h2>
+        <p class="sidebar-subtitle" data-i18n="sidebar.subtitle">游戏修改器</p>
+      </div>
+      <div class="sidebar-actions">
+        <button class="sidebar-btn primary" onclick="showCreatePlugin()" data-i18n="sidebar.createPlugin">✏️ 创建插件</button>
+      </div>
+      <div class="sidebar-info">
+        <span data-i18n="sidebar.plugins">Plugins:</span> <strong id="pluginCount">0</strong>
+      </div>
+      <ul class="game-list" id="gameList"></ul>
+    </div>
+
+    <div class="main-content">
+      <div class="header">
+        <h1>xcmod</h1>
+        <div class="process-selector" id="processSelector">
+          <div class="proc-dropdown" id="procDropdown">
+            <div class="proc-dropdown-trigger" id="procDropdownTrigger" onclick="toggleProcDropdown()">
+              <span class="proc-selected-icon" id="procSelectedIcon"></span>
+              <span class="proc-selected-text" id="procSelectedText" data-i18n="process.selectProcess">选择进程...</span>
+              <span class="proc-dropdown-arrow">▼</span>
+            </div>
+            <div class="proc-dropdown-list" id="procDropdownList">
+              <div class="proc-search-wrap">
+                <input type="text" id="procSearchInput" class="proc-search-input" placeholder="" data-i18n-placeholder="process.search" autocomplete="off">
+              </div>
+            </div>
+          </div>
+          <button class="refresh-btn" id="refreshBtn" onclick="refreshProcesses()" data-i18n="process.refresh">刷新</button>
+          <button class="log-toolbar-btn" id="logDialogBtn" onclick="showLogDialog()" title="查看运行日志" data-i18n="log.title">日志</button>
+          <button class="log-toolbar-btn log-clear-btn" id="clearLogBtn" onclick="clearLog()" title="清空所有日志" data-i18n="log.clear">清空</button>
+          <select id="languageSelect" class="language-select" onchange="changeLanguage(this.value)">
+            <option value="zh" data-i18n="language.chinese">中文</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="pluginModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 data-i18n="plugin.title">📦 插件管理</h2>
+          <button class="close-btn" onclick="closePluginManager()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="tab-container">
+            <button class="tab-btn active" onclick="showTab('upload')" data-i18n="plugin.upload">上传插件</button>
+            <button class="tab-btn" onclick="showTab('create')" data-i18n="plugin.create">创建插件</button>
+            <button class="tab-btn" onclick="showTab('guide')" data-i18n="plugin.guide">制作教程</button>
+          </div>
+          
+          <div class="tab-content" id="tab-upload">
+            <h3 data-i18n="plugin.upload">上传 / 导入 插件</h3>
+
+            <!-- 快捷导入区域 -->
+            <div class="import-zone" id="importDropZone">
+              <div class="import-drop-hint" id="dropHint">
+                <span class="import-icon">&#128194;</span>
+                <p>Drag <strong>.json</strong> plugin file here</p>
+                <p class="import-sub">Or import using:</p>
+              </div>
+              <div class="import-buttons">
+                <button type="button" class="import-btn" onclick="pickImportFile()" data-i18n="plugin.selectFile">&#128194; 选择文件</button>
+                <button type="button" class="import-btn" onclick="showPasteDialog()" data-i18n="plugin.pasteJson">&#128203; 粘贴JSON</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" id="tab-create" style="display: none;">
+            <h3 data-i18n="plugin.createGamePlugin">🎮 创建游戏插件</h3>
+            <div class="create-guide">
+              <p><strong data-i18n="plugin.usage">使用说明：</strong></p>
+              <ol>
+                <li data-i18n="plugin.step1">先填写游戏基本信息</li>
+                <li data-i18n="plugin.step2">启动游戏并选择进程</li>
+                <li data-i18n="plugin.step3">使用内存扫描找到地址</li>
+                <li data-i18n="plugin.step4">点击扫描结果添加到插件</li>
+                <li data-i18n="plugin.step5">完成后保存插件</li>
+              </ol>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="plugin.gameName">游戏名称</label>
+              <input type="text" id="createGameName" placeholder="" data-i18n-placeholder="plugin.gameNamePlaceholder">
+            </div>
+            <div class="form-group">
+              <label data-i18n="plugin.executable">可执行文件名</label>
+              <input type="text" id="createGameExe" placeholder="" data-i18n-placeholder="plugin.executablePlaceholder">
+            </div>
+            <div class="form-group">
+              <label data-i18n="plugin.description">游戏描述</label>
+              <textarea id="createGameDesc" placeholder="" data-i18n-placeholder="plugin.descPlaceholder"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="plugin.addedCheats">已添加的修改项</label> (<span id="createCheatCount">0</span>)
+              <div id="createCheatItems">
+                <div class="empty-cheats">
+                  <p data-i18n="plugin.noCheats">暂无修改项，请使用内存扫描找到地址后添加</p>
+                </div>
+              </div>
+            </div>
+            
+            <button type="button" class="submit-btn" onclick="saveNewPlugin()" id="saveNewPluginBtn" data-i18n="plugin.savePlugin">保存插件</button>
+          </div>
+
+          <div class="tab-content" id="tab-guide" style="display: none;">
+            <h3 data-i18n="plugin.guideTitle">📝 插件制作教程</h3>
+            <div class="guide-content">
+              <h4 data-i18n="plugin.guideStep1">1. 创建插件配置</h4>
+              <p data-i18n="plugin.guideStep1Desc">插件是 JSON 格式的配置文件，放置在 <code>games/</code> 目录下：</p>
+              <pre id="guideExampleJson">{
+  "id": "example-game",
+  "name": "示例游戏",
+  "executable": "Game.exe",
+  "description": "这是一个示例插件配置",
+  "cheats": [
+    {
+      "id": "unlimited-health",
+      "name": "无限生命",
+      "description": "设置生命值为999",
+      "address": "0x12345678",
+      "value": 999,
+      "dataType": "int"
+    },
+    {
+      "id": "infinite-money",
+      "name": "无限金钱",
+      "description": "设置金钱为999999",
+      "address": "0x1234567C",
+      "value": 999999,
+      "dataType": "int"
+    },
+    {
+      "id": "god-mode",
+      "name": "无敌模式",
+      "description": "开启无敌状态",
+      "address": "0x12345680",
+      "value": 1,
+      "dataType": "byte"
+    }
+  ]
+}</pre>
+              
+              <h4>2. 数据类型说明</h4>
+              <table>
+                <tr><th>类型</th><th>适用场景</th></tr>
+                <tr><td>int</td><td>生命值、金钱、等级等整数</td></tr>
+                <tr><td>float</td><td>百分比、坐标等小数</td></tr>
+                <tr><td>byte</td><td>开关状态（0/1）</td></tr>
+                <tr><td>short</td><td>小范围整数</td></tr>
+                <tr><td>double</td><td>高精度小数</td></tr>
+              </table>
+              
+              <h4>3. 上传规范</h4>
+              <ul>
+                <li>文件名使用英文小写，用连字符分隔</li>
+                <li>游戏名称使用中文全称</li>
+                <li>内存地址必须以 0x 开头</li>
+                <li>每个修改项必须有唯一的 id</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <h3 data-i18n="scan.title">🔍 内存扫描</h3>
+          <span id="scanGameHint" class="scan-game-hint" style="display:none;"></span>
+        </div>
+        <div class="scan-form">
+          <div class="scan-input-group">
+            <label class="scan-input-label" data-i18n="scan.firstValue">第一次值</label>
+            <input type="number" id="scanValue1" placeholder="" data-i18n-placeholder="scan.initialPlaceholder">
+          </div>
+          <div class="scan-input-group" id="scanValue2Group">
+            <label class="scan-input-label" data-i18n="scan.secondValue">第二次值</label>
+            <input type="number" id="scanValue2" placeholder="" data-i18n-placeholder="scan.changedPlaceholder" disabled>
+          </div>
+          <select id="dataType">
+            <option value="int" data-i18n="memory.int">整数</option>
+            <option value="float" data-i18n="memory.float">浮点数</option>
+            <option value="double" data-i18n="memory.double">双精度</option>
+            <option value="byte" data-i18n="memory.byte">字节</option>
+            <option value="short" data-i18n="memory.short">短整数</option>
+          </select>
+          <button id="startScanBtn" onclick="startScan()" data-i18n="scan.startScan">开始扫描</button>
+          <button id="rescanBtn" onclick="doRescan()" disabled data-i18n="scan.rescan">重新扫描</button>
+          <button id="stopScanBtn" onclick="stopScan()" style="display:none;background:linear-gradient(135deg,#ff4444,#cc0000);" data-i18n="scan.stopScan">停止扫描</button>
+        </div>
+        <div id="scanProgress" style="display:none;margin-top:12px;padding:8px 12px;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);border-radius:6px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span id="scanProgressText" style="font-size:12px;color:#00d4ff;">准备扫描...</span>
+            <span id="scanProgressPct" style="font-size:11px;color:#888;"></span>
+          </div>
+          <div style="width:100%;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;">
+            <div id="scanProgressBar" style="width:0%;height:100%;background:linear-gradient(90deg,#00d4ff,#00ff88);border-radius:3px;transition:width 0.3s;"></div>
+          </div>
+        </div>
+        <div class="scan-results" id="scanResults"></div>
+      </div>
+
+      <div class="cheat-panel" id="cheatPanel">
+        <div class="cheat-panel-header">
+          <h3 data-i18n="cheat.title">⚡ 修改项</h3>
+          <button type="button" class="cheat-add-btn" onclick="showAddNewCheatDialog()" title="" data-i18n-title="cheat.add" data-i18n="cheat.add">+ 添加</button>
+        </div>
+        <div class="cheat-list" id="cheatList">
+          <div class="empty-state">
+            <h3 data-i18n="common.selectGame">选择一个游戏查看可用修改</h3>
+            <p data-i18n="cheat.empty">从左侧列表选择一个游戏，或使用内存扫描查找地址</p>
+          </div>
+        </div>
+
+        <!-- 保存修改按钮 -->
+        <div class="save-plugin-area" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08);">
+          <button type="button" class="sidebar-btn save-plugin-btn" id="savePluginChangesBtn" onclick="savePluginChanges()" style="width:100%;justify-content:center;" data-i18n="common.save">&#128190; 保存插件修改</button>
+        </div>
+      </div>
+
+      <div class="status-bar">
+        <span data-i18n="status.label">状态:</span> <span class="status-online" data-i18n="status.connected">已连接</span>
+        <span data-i18n="status.currentProcess">当前进程:</span> <span id="currentProcess" data-i18n="status.notSelected">未选择</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 日志弹窗 -->
+  <div class="log-dialog-overlay" id="logDialogOverlay" style="display:none;" onclick="hideLogDialog()">
+    <div class="log-dialog" onclick="event.stopPropagation()">
+      <div class="log-dialog-header">
+        <span class="log-dialog-title" data-i18n="log.title">📋 运行日志</span>
+        <div class="log-dialog-actions">
+          <button class="xd-btn xd-btn-cancel" onclick="clearLog()" style="padding:5px 14px;font-size:12px;" data-i18n="log.clear">清空日志</button>
+          <button class="log-close-btn" onclick="hideLogDialog()" title="" data-i18n-title="common.close">&times;</button>
+        </div>
+      </div>
+      <div class="log-dialog-content" id="logContent"></div>
+      <div class="log-dialog-footer">
+        <span id="logCount">0 <span data-i18n="status.items">条</span></span>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

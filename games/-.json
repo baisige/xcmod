@@ -1,0 +1,22 @@
+{
+  "id": "-",
+  "name": "龙胤立志传1",
+  "executable": "LongYinLiZhizhuan.exe",
+  "description": "123",
+  "cheats": [
+    {
+      "id": "cheat_2",
+      "name": "金钱3",
+      "address": "0x22E812D5D18",
+      "value": 74318,
+      "dataType": "int"
+    },
+    {
+      "id": "cheat_1",
+      "name": "其他2",
+      "address": "1",
+      "value": 2,
+      "dataType": "int"
+    }
+  ]
+}
