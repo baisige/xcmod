@@ -41,6 +41,20 @@
 - Node.js 18+
 - 管理员权限（用于内存操作）
 
+### 快速运行（推荐）
+
+直接以管理员身份运行 `start-admin.bat`：
+
+```bash
+# 方法1：右键以管理员身份运行
+start-admin.bat
+
+# 方法2：命令行方式
+powershell -Command "Start-Process start-admin.bat -Verb RunAs"
+```
+
+**首次运行**：如果没有 `node_modules` 目录，脚本会自动执行 `npm install` 安装依赖。
+
 ### 开发模式
 
 ```bash
